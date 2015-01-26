@@ -54,48 +54,36 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 @end
 
 /**
- *  This class is used to track changes to a given RLMRealm. Since Realm doesn't support automatic change tracking, this class allow you to log changes manually to the manager, which will in turn rebroadcast these changes to any listeners.
+ *  This class is used to track changes to a given RLMRealm. Since Realm doesn't support automatic change tracking, this class allows the developer to log object changes, which will be passed along to the RBQRealmNotificationManager who in turn broadcasts it to any listeners
  
-    Since RLMObjects are not thread-safe, when an object is logged to the manager, it is internally transformed into an RBQSafeRealmObject that is thread-safe and this will then be passed to any listeners once the Realm being monitored updates.
+ Since RLMObjects are not thread-safe, when an object is logged to the manager, it is internally transformed into an RBQSafeRealmObject that is thread-safe and this will then be passed to any listeners once the Realm being monitored updates.
  
-    @warning *Important:* Only RLMObjects with primary keys can be logged because the primary key is required to create a RBQSafeRealmObject.
+ @warning *Important:* Only RLMObjects with primary keys can be logged because the primary key is required to create a RBQSafeRealmObject.
  */
-@interface RBQRealmNotificationManager : NSObject
+@interface RBQRealmChangeLogger : NSObject
 
-/**
- *  Current representation of changes logged to the RBQRealmNotificationManager instance.
- */
 @property (readonly, nonatomic) NSDictionary *entityChanges;
 
 /**
- *  Retrieve the singleton RBQRealmNotificationManager that monitors changes on the default Realm.
+ *  Creates or retrieves the logger instance for the default Realm on the current thread
  *
- *  @return Singleton RBQRealmNotificationManager
+ *  @return Instance of RBQRealmChangeLogger
  */
-+ (instancetype)defaultManager;
++ (instancetype)defaultLogger;
 
 /**
- *  Retrieve the singleton RBQRealmNotificationManager that monitors changes for a given RLMRealm
+ *  Creates or retrieves the logger instance for a specific Realm on the current thread
  *
- *  @param realm RLMRealm to monitor changes on
+ *  @param realm A RLMRealm instance
  *
- *  @return Singleton RBQRealmNotificationManager
+ *  @return Instance of RBQRealmChangeLogger
  */
-+ (instancetype)managerForRealm:(RLMRealm *)realm;
-
-/**
- *  Retrieve the singleton RBQRealmNotificationManager that monitors changes for a given in-memory RLMRealm
- *
- *  @param inMemoryRealm An in-memory RLMRealm instance
- *
- *  @return Singleton RBQRealmNotificationManager
- */
-+ (instancetype)managerForInMemoryRealm:(RLMRealm *)inMemoryRealm;
++ (instancetype)loggerForRealm:(RLMRealm *)realm;
 
 /**
  *  Register an addition for a given RLMObject
  
-    @warning *Important:* Can be called before or after the addition to Realm
+ @warning *Important:* Can be called before or after the addition to Realm
  *
  *  @param addedObject Added RLMObject
  */
@@ -104,7 +92,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 /**
  *  Register a collection of RLMObject additions
  
-    @warning *Important:* Can be called before or after the additions to Realm
+ @warning *Important:* Can be called before or after the additions to Realm
  *
  *  @param addedObjects RLMArray, RLMResults, NSSet, or NSArray of added RLMObjects
  */
@@ -113,7 +101,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 /**
  *  Register a delete for a given RLMObject
  
-    @warning *Important:* Must be called before the delete in Realm (since the RLMObject will then be invalidated).
+ @warning *Important:* Must be called before the delete in Realm (since the RLMObject will then be invalidated).
  *
  *  @param deletedObject To be deleted RLMObject
  */
@@ -122,7 +110,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 /**
  *  Register a collection of RLMObject deletes
  
-    @warning *Important:* Must be called before the delete in Realm (since the RLMObject will then be invalidated).
+ @warning *Important:* Must be called before the delete in Realm (since the RLMObject will then be invalidated).
  *
  *  @param deletedObjects RLMArray, RLMResults, NSSet, or NSArray of deleted RLMObjects
  */
@@ -131,7 +119,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 /**
  *  Register a change for a given RLMObject
  
-    @warning *Important:* Can be called before or after change to Realm
+ @warning *Important:* Can be called before or after change to Realm
  *
  *  @param changedObject Changed RLMObject
  */
@@ -140,7 +128,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 /**
  *  Register a collection of RLMObject changes
  
-    @warning *Important:* Can be called before or after change to Realm
+ @warning *Important:* Can be called before or after change to Realm
  *
  *  @param changedObjects RLMArray, RLMResults, NSSet, or NSArray of changed RLMObjects
  */
@@ -156,6 +144,25 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 - (void)didAddObjects:(id<NSFastEnumeration>)addedObjects
     willDeleteObjects:(id<NSFastEnumeration>)deletedObjects
      didChangeObjects:(id<NSFastEnumeration>)changedObjects;
+
+@end
+
+/**
+ *  This class works in conjunction with any instances of RBQRealmChangeLogger to broadcast any changes to the registered listeners
+ */
+@interface RBQRealmNotificationManager : NSObject
+
+/**
+ *  Current representation of changes logged to the RBQRealmNotificationManager instance.
+ */
+@property (readonly, nonatomic) NSDictionary *entityChanges;
+
+/**
+ *  Retrieve the singleton RBQRealmNotificationManager that passes changes from all Realm loggers
+ *
+ *  @return Singleton RBQRealmNotificationManager
+ */
++ (instancetype)defaultManager;
 
 /**
  *  Use this method to add a notification block that will fire every time the Realm for this RBQNotificationManager updates. The block passes the changes from the Realm update that were logged to the RBQRealmNotificationManager.
