@@ -9,6 +9,9 @@
 #import "RBQRealmNotificationManager.h"
 #import "RBQSafeRealmObject.h"
 
+#include <pthread.h>
+#import <objc/runtime.h>
+
 #pragma mark - RBQEntityChangesObject
 
 @interface RBQEntityChangesObject ()
@@ -89,17 +92,16 @@
 
 @interface RBQNotificationToken ()
 
-@property (nonatomic, strong) NSString *realmPath;
-@property (nonatomic, strong) RLMRealm *inMemoryRealm;
 @property (nonatomic, copy) RBQNotificationBlock block;
 
 @end
 
 @implementation RBQNotificationToken
 
+
 - (void)dealloc
 {
-    if (_realmPath || _block) {
+    if (_block) {
         NSLog(@"RBQNotificationToken released without unregistering a notification. You must hold \
               on to the RBQNotificationToken returned from addNotificationBlock and call \
               removeNotification: when you no longer wish to recieve RBQRealm notifications.");
@@ -108,46 +110,16 @@
 
 @end
 
-#pragma mark - Constants
-
-NSString * const kRBQAddedSafeObjectsKey = @"RBQAddedSafeObjectsKey";
-NSString * const kRBQDeletedSafeObjectsKey = @"RBQDeletedSafeObjectsKey";
-NSString * const kRBQChangedSafeObjectsKey = @"RBQChangedSafeObjectsKey ";
-
 #pragma mark - RBQRealmNotificationManager
 
-@interface RBQRealmNotificationManager ()
+@interface RBQRealmNotificationManager () {
+    NSMapTable *_notificationHandlers;
+}
 
-@property (strong, nonatomic) NSString *realmPath;
-@property (strong, nonatomic) RLMRealm *inMemoryRealm;
-
-@property (strong, nonatomic) NSMutableDictionary *internalEntityChanges;
-
-@property (strong, nonatomic) RLMNotificationToken *token;
-
-@property (strong, nonatomic) NSMapTable *notificationHandlers;
+- (void)sendNotificationsWithRealm:(RLMRealm *)realm
+                     entityChanges:(NSDictionary *)entityChanges;
 
 @end
-
-#pragma mark - Global
-
-// Global map to return the same notification manager for each Realm
-NSMapTable *pathToManagerMap;
-
-RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
-    @synchronized(pathToManagerMap) {
-        
-        // Create the map if not initialized
-        if (!pathToManagerMap) {
-            pathToManagerMap = [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsStrongMemory
-                                                     valueOptions:NSPointerFunctionsStrongMemory];
-            
-            return nil;
-        }
-        
-        return [pathToManagerMap objectForKey:path];
-    }
-}
 
 @implementation RBQRealmNotificationManager
 
@@ -155,45 +127,12 @@ RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
 
 + (instancetype)defaultManager
 {
-    return [RBQRealmNotificationManager managerForRealm:[RLMRealm defaultRealm]];
-}
-
-+ (instancetype)managerForRealm:(RLMRealm *)realm
-{
-    RBQRealmNotificationManager *defaultManager = cachedRealmNotificationManager(realm.path);
-    
-    if (!defaultManager) {
-        defaultManager = [[self alloc] init];
-        
-        defaultManager.realmPath = realm.path;
-        
-        [defaultManager registerChangeNotification];
-        
-        // Add the manager to the cache
-        @synchronized(pathToManagerMap) {
-            [pathToManagerMap setObject:defaultManager forKey:realm.path];
-        }
-    }
-    return defaultManager;
-}
-
-+ (instancetype)managerForInMemoryRealm:(RLMRealm *)inMemoryRealm
-{
-    RBQRealmNotificationManager *defaultManager = cachedRealmNotificationManager(inMemoryRealm.path);
-    
-    if (!defaultManager) {
-        defaultManager = [[self alloc] init];
-        
-        defaultManager.inMemoryRealm = inMemoryRealm;
-        
-        [defaultManager registerChangeNotification];
-        
-        // Add the manager to the cache
-        @synchronized(pathToManagerMap) {
-            [pathToManagerMap setObject:defaultManager forKey:inMemoryRealm.path];
-        }
-    }
-    return defaultManager;
+    static RBQRealmNotificationManager *_defaultManager = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _defaultManager = [[self alloc] init];
+    });
+    return _defaultManager;
 }
 
 #pragma mark - Instance
@@ -222,17 +161,12 @@ RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
     
     RBQNotificationToken *token = [[RBQNotificationToken alloc] init];
     
-    if (self.inMemoryRealm) {
-        token.inMemoryRealm = self.inMemoryRealm;
-    }
-    else {
-        token.realmPath = self.realmPath;
-    }
-    
     token.block = block;
+    
     @synchronized(_notificationHandlers) {
         [_notificationHandlers setObject:token forKey:token];
     }
+    
     return token;
 }
 
@@ -242,18 +176,132 @@ RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
         @synchronized(_notificationHandlers) {
             [_notificationHandlers removeObjectForKey:token];
         }
-        token.realmPath = nil;
-        token.inMemoryRealm = nil;
+        
         token.block = nil;
     }
 }
 
-#pragma mark - Public Change Methods
+#pragma mark - RBQNotification
+
+// Calling this method will broadcast any registered changes
+- (void)sendNotificationsWithRealm:(RLMRealm *)realm
+                     entityChanges:(NSDictionary *)entityChanges
+{
+    // call this realms notification blocks
+    for (RBQNotificationToken *token in [_notificationHandlers copy]) {
+        if (token.block) {
+            
+            token.block(entityChanges,
+                        realm);
+        }
+    }
+}
+
+@end
+
+
+#pragma mark - Global
+
+// Global RBQRealmNotificationManager instance cache
+static NSMutableDictionary *s_loggersPerPath;
+
+static RBQRealmChangeLogger *cachedRealmChangeLogger(NSString *path) {
+    mach_port_t threadID = pthread_mach_thread_np(pthread_self());
+    @synchronized(s_loggersPerPath) {
+        return [s_loggersPerPath[path] objectForKey:@(threadID)];
+    }
+}
+
+static void cacheRealmChangeLogger(RBQRealmChangeLogger *logger, NSString *path) {
+    mach_port_t threadID = pthread_mach_thread_np(pthread_self());
+    @synchronized(s_loggersPerPath) {
+        if (!s_loggersPerPath[path]) {
+            s_loggersPerPath[path] = [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsObjectPersonality
+                                                            valueOptions:NSPointerFunctionsWeakMemory];
+        }
+        [s_loggersPerPath[path] setObject:logger forKey:@(threadID)];
+    }
+}
+
+static void clearManagerCache() {
+    @synchronized(s_loggersPerPath) {
+        for (NSMapTable *map in s_loggersPerPath.allValues) {
+            [map removeAllObjects];
+        }
+        s_loggersPerPath = [NSMutableDictionary dictionary];
+    }
+}
+
+#pragma mark - Constants
+
+static NSString * const kRBQAddedSafeObjectsKey = @"RBQAddedSafeObjectsKey";
+static NSString * const kRBQDeletedSafeObjectsKey = @"RBQDeletedSafeObjectsKey";
+static NSString * const kRBQChangedSafeObjectsKey = @"RBQChangedSafeObjectsKey";
+static char kAssociatedObjectKey;
+
+#pragma mark - RBQRealmChangeLogger
+
+@interface RBQRealmChangeLogger ()
+
+@property (strong, nonatomic) NSMutableDictionary *internalEntityChanges;
+
+@property (strong, nonatomic) RLMNotificationToken *token;
+
+@property (weak, nonatomic) RLMRealm *realm;
+
+@end
+
+@implementation RBQRealmChangeLogger
+
+#pragma mark - Private Class
+
++ (void)initialize
+{
+    static bool initialized;
+    if (initialized) {
+        return;
+    }
+    initialized = true;
+    
+    clearManagerCache();
+}
+
+#pragma mark - Public Class
+
++ (instancetype)defaultLogger
+{
+    return [RBQRealmChangeLogger loggerForRealm:[RLMRealm defaultRealm]];
+}
+
++ (instancetype)loggerForRealm:(RLMRealm *)realm
+{
+    RBQRealmChangeLogger *logger = cachedRealmChangeLogger(realm.path);
+    
+    if (!logger) {
+        logger = [[self alloc] init];
+        
+        logger.realm = realm;
+        
+        [logger registerChangeNotification];
+        
+        // Associate the logger with the realm so we get dealloc when it does
+        objc_setAssociatedObject(realm, &kAssociatedObjectKey, logger, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        
+        // Add the manager to the cache
+        cacheRealmChangeLogger(logger, realm.path);
+    }
+    
+    return logger;
+}
+
+#pragma mark - Public Instance
 
 - (void)didAddObject:(RLMObject *)addedObject
 {
     if (addedObject &&
         !addedObject.invalidated) {
+        
+        [self tokenCheck];
         
         // Save a safe object to use across threads
         RBQSafeRealmObject *safeObject = [RBQSafeRealmObject safeObjectFromObject:addedObject];
@@ -267,6 +315,8 @@ RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
 - (void)didAddObjects:(id<NSFastEnumeration>)addedObjects
 {
     if (addedObjects) {
+        
+        [self tokenCheck];
         
         for (RLMObject *addedObject in addedObjects) {
             
@@ -289,6 +339,8 @@ RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
     if (deletedObject &&
         !deletedObject.invalidated) {
         
+        [self tokenCheck];
+        
         // Save a safe object to use across threads
         RBQSafeRealmObject *safeObject = [RBQSafeRealmObject safeObjectFromObject:deletedObject];
         
@@ -301,6 +353,8 @@ RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
 - (void)willDeleteObjects:(id<NSFastEnumeration>)deletedObjects
 {
     if (deletedObjects) {
+        
+        [self tokenCheck];
         
         for (RLMObject *deletedObject in deletedObjects) {
             
@@ -323,6 +377,8 @@ RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
     if (changedObject &&
         !changedObject.invalidated) {
         
+        [self tokenCheck];
+        
         // Save a safe object to use across threads
         RBQSafeRealmObject *safeObject = [RBQSafeRealmObject safeObjectFromObject:changedObject];
         
@@ -335,6 +391,8 @@ RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
 - (void)didChangeObjects:(id<NSFastEnumeration>)changedObjects
 {
     if (changedObjects) {
+        
+        [self tokenCheck];
         
         for (RLMObject *changedObject in changedObjects) {
             
@@ -356,6 +414,8 @@ RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
     willDeleteObjects:(id<NSFastEnumeration>)deletedObjects
      didChangeObjects:(id<NSFastEnumeration>)changedObjects
 {
+    [self tokenCheck];
+    
     if (addedObjects) {
         
         for (RLMObject *addedObject in addedObjects) {
@@ -430,45 +490,31 @@ RBQRealmNotificationManager *cachedRealmNotificationManager(NSString *path) {
 
 - (void)registerChangeNotification
 {
-    self.token = [[self realmForManager]
+    typeof(self) __weak weakSelf = self;
+    
+    self.token = [self.realm
                   addNotificationBlock:^(NSString *note, RLMRealm *realm) {
                       
                       if ([note isEqualToString:RLMRealmDidChangeNotification]) {
-                          [self sendNotificationsWithRealm:realm];
+                          
+                          // Pass the changes to the RealmNotificationManager
+                          [[RBQRealmNotificationManager defaultManager] sendNotificationsWithRealm:realm entityChanges:weakSelf.entityChanges];
+                          
+                          // Remove the token and nil it so we get dealloc
+                          [weakSelf.realm removeNotification:weakSelf.token];
+                          weakSelf.token = nil;
                       }
                   }];
 }
 
-#pragma mark - RBQNotification
-
-// Calling this method will broadcast any registered changes
-- (void)sendNotificationsWithRealm:(RLMRealm *)realm
+- (void)tokenCheck
 {
-    // call this realms notification blocks
-    for (RBQNotificationToken *token in [_notificationHandlers copy]) {
-        if (token.block) {
-                
-            token.block(self.internalEntityChanges.copy,
-                        realm);
-        }
+    if (!self.token) {
+        [self registerChangeNotification];
     }
-    
-    self.internalEntityChanges = nil;
 }
 
 #pragma mark - Helper
-
-- (RLMRealm *)realmForManager
-{
-    if (self.inMemoryRealm) {
-        return self.inMemoryRealm;
-    }
-    else if (self.realmPath) {
-        return [RLMRealm realmWithPath:self.realmPath];
-    }
-    
-    return nil;
-}
 
 - (RBQEntityChangesObject *)createOrRetrieveEntityChangesForClassName:(NSString *)className
 {
