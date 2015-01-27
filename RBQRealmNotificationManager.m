@@ -521,13 +521,19 @@ static char kAssociatedObjectKey;
 
 - (RBQEntityChangesObject *)createOrRetrieveEntityChangesForClassName:(NSString *)className
 {
-    RBQEntityChangesObject *entityChangesObject = [self.internalEntityChanges objectForKey:className];
+    if (!className) {
+        return nil;
+    }
     
-    if (!entityChangesObject) {
-        entityChangesObject = [RBQEntityChangesObject createEntityChangeObjectWithClassName:className];
+    RBQEntityChangesObject *entityChangesObject;
+    @synchronized(self.internalEntityChanges) {
+        entityChangesObject = self.internalEntityChanges[className];
         
-        @synchronized(self.internalEntityChanges) {
-            [self.internalEntityChanges setObject:entityChangesObject forKey:className];
+        if (!entityChangesObject) {
+            entityChangesObject =
+                [RBQEntityChangesObject createEntityChangeObjectWithClassName:className];
+        
+            self.internalEntityChanges[className] = entityChangesObject;
         }
     }
     
