@@ -500,6 +500,9 @@ static char kAssociatedObjectKey;
                           // Pass the changes to the RealmNotificationManager
                           [[RBQRealmNotificationManager defaultManager] sendNotificationsWithRealm:realm entityChanges:weakSelf.entityChanges];
                           
+                          // Nil the changes collection
+                          weakSelf.internalEntityChanges = nil;
+                          
                           // Remove the token and nil it so we get dealloc
                           [weakSelf.realm removeNotification:weakSelf.token];
                           weakSelf.token = nil;
