@@ -55,10 +55,10 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 
 /**
  *  This class is used to track changes to a given RLMRealm. Since Realm doesn't support automatic change tracking, this class allows the developer to log object changes, which will be passed along to the RBQRealmNotificationManager who in turn broadcasts it to any listeners
- 
- Since RLMObjects are not thread-safe, when an object is logged to the manager, it is internally transformed into an RBQSafeRealmObject that is thread-safe and this will then be passed to any listeners once the Realm being monitored updates.
- 
- @warning *Important:* Only RLMObjects with primary keys can be logged because the primary key is required to create a RBQSafeRealmObject.
+ *
+ *  Since RLMObjects are not thread-safe, when an object is logged to the manager, it is internally transformed into an RBQSafeRealmObject that is thread-safe and this will then be passed to any listeners once the Realm being monitored updates.
+ *
+ *  @warning *Important:* Only RLMObjects with primary keys can be logged because the primary key is required to create a RBQSafeRealmObject.
  */
 @interface RBQRealmChangeLogger : NSObject
 
@@ -82,8 +82,8 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 
 /**
  *  Register an addition for a given RLMObject
- 
- @warning *Important:* Can be called before or after the addition to Realm
+ *
+ *  @warning *Important:* Can be called before or after the addition to Realm
  *
  *  @param addedObject Added RLMObject
  */
@@ -91,8 +91,8 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 
 /**
  *  Register a collection of RLMObject additions
- 
- @warning *Important:* Can be called before or after the additions to Realm
+ *
+ *  @warning *Important:* Can be called before or after the additions to Realm
  *
  *  @param addedObjects RLMArray, RLMResults, NSSet, or NSArray of added RLMObjects
  */
@@ -100,8 +100,8 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 
 /**
  *  Register a delete for a given RLMObject
- 
- @warning *Important:* Must be called before the delete in Realm (since the RLMObject will then be invalidated).
+ *
+ *  @warning *Important:* Must be called before the delete in Realm (since the RLMObject will then be invalidated).
  *
  *  @param deletedObject To be deleted RLMObject
  */
@@ -109,8 +109,8 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 
 /**
  *  Register a collection of RLMObject deletes
- 
- @warning *Important:* Must be called before the delete in Realm (since the RLMObject will then be invalidated).
+ *
+ *  @warning *Important:* Must be called before the delete in Realm (since the RLMObject will then be invalidated).
  *
  *  @param deletedObjects RLMArray, RLMResults, NSSet, or NSArray of deleted RLMObjects
  */
@@ -118,8 +118,8 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 
 /**
  *  Register a change for a given RLMObject
- 
- @warning *Important:* Can be called before or after change to Realm
+ *
+ *  @warning *Important:* Can be called before or after change to Realm
  *
  *  @param changedObject Changed RLMObject
  */
@@ -127,8 +127,8 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
 
 /**
  *  Register a collection of RLMObject changes
- 
- @warning *Important:* Can be called before or after change to Realm
+ *
+ *  @warning *Important:* Can be called before or after change to Realm
  *
  *  @param changedObjects RLMArray, RLMResults, NSSet, or NSArray of changed RLMObjects
  */
@@ -168,11 +168,11 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *  Use this method to add a notification block that will fire every time the Realm for this RBQNotificationManager updates. The block passes the changes from the Realm update that were logged to the RBQRealmNotificationManager.
  *
  *  @param block RBQNotificationBlock that passes a NSDictionary keyed by entity name. The object for the key is a RBQEntityChangesObject which contains NSSets of all the various changes to the entity.
- 
-    @warning *Important:* You must hold onto a strong reference to the returned token or it will be deallocated, preventing any changes from propogating.
- 
-    @see RBQEntityChangesObject
-    @see RBQNotificationBlock
+ *
+ *  @warning *Important:* You must hold onto a strong reference to the returned token or it will be deallocated, preventing any changes from propogating.
+ *
+ *  @see RBQEntityChangesObject
+ *  @see RBQNotificationBlock
  *
  *  @return A new instance of RBQNotificationToken.
  */

@@ -8,17 +8,22 @@
 
 #import "RLMObject.h"
 
+/**
+ Block used to edit a RLMObject while automatically notifying RBQRealmChangeLogger
+ 
+ @param object Object to be edited (will need to be cast into appropriate subclass)
+ */
 typedef void(^RBQChangeNotificationBlock)(RLMObject *object);
 
 /**
- *  Category on RLMObject that provides convenience methods to change a RLMObject while automatically notifying RBQRealmNotificationManager
+ *  Category on RLMObject that provides convenience methods to change a RLMObject while automatically notifying RBQRealmChangeLogger
  */
 @interface RLMObject (Notifications)
 
 /**
  *  Convenience method that accepts a RBQChangeNotificationBlock, which contains the current RLMObject as a parameter. 
- 
-    Edit the parameter object in the block and an automatic notification will be generated for RBQRealmNotificationManager
+ *
+ *  Edit the parameter object in the block and an automatic notification will be generated for RBQRealmChangeLogger
  *
  *  @param block Block contains the RLMObject used to call this method. Edit the RLMObject within the block.
  */
@@ -26,8 +31,8 @@ typedef void(^RBQChangeNotificationBlock)(RLMObject *object);
 
 /**
  *  Convenience method that accepts a RBQChangeNotificationBlock, which contains the current RLMObject as a parameter.
- 
-    The block will be run within the required beginWriteTransaction and commitWriteTransaction calls automatically. Edit the parameter object in the block and an automatic notification will be generated for RBQRealmNotificationManager.
+ *
+ *  The block will be run within the required beginWriteTransaction and commitWriteTransaction calls automatically. Edit the parameter object in the block and an automatic notification will be generated for RBQRealmChangeLogger.
  *
  *  @param block Block contains the RLMObject used to call this method. Edit the RLMObject within the block.
  */
