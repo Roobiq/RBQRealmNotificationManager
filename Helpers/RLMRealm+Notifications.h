@@ -6,7 +6,7 @@
 //  Copyright (c) 2015 Roobiq. All rights reserved.
 //
 
-#import "RLMRealm.h"
+#import <Realm/Realm.h>
 
 /**
  *  Category on RLMRealm that provides convenience methods similar to RLMRealm class methods but include notifying RBQRealmNotificationManager
