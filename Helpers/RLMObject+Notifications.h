@@ -13,7 +13,7 @@
  
  @param object Object to be edited (will need to be cast into appropriate subclass)
  */
-typedef void(^RBQChangeNotificationBlock)(RLMObject *object);
+typedef void(^RBQChangeNotificationBlock)(id object);
 
 /**
  *  Category on RLMObject that provides convenience methods to change a RLMObject while automatically notifying RBQRealmChangeLogger

@@ -32,9 +32,7 @@
 
 - (void)addOrUpdateObjectWithNotification:(RLMObject *)object
 {
-    NSString *className = NSStringFromClass(object.class);
-    
-    if ([className hasPrefix:@"RLMStandalone_"]) {
+    if (object.realm != self) {
         [[RBQRealmChangeLogger loggerForRealm:self] didAddObject:object];
     }
     else {
@@ -44,7 +42,7 @@
     [self addOrUpdateObject:object];
 }
 
-- (void)addOrUpdateObjectsFromArrayWithNotification:(id)array
+- (void)addOrUpdateObjectsFromArrayWithNotification:(id<NSFastEnumeration>)array
 {
     for (RLMObject *object in array) {
         [self addOrUpdateObjectWithNotification:object];
@@ -58,7 +56,7 @@
     [self deleteObject:object];
 }
 
-- (void)deleteObjectsWithNotification:(id)array
+- (void)deleteObjectsWithNotification:(id<NSFastEnumeration>)array
 {
     for (RLMObject *object in array) {
         [[RBQRealmChangeLogger loggerForRealm:self] willDeleteObject:object];

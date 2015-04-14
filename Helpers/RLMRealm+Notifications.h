@@ -43,7 +43,7 @@
  *
  *  @param array A collection object that conforms to NSFastEnumeration (e.g. NSArray, RLMArray, RLMResults)
  */
-- (void)addOrUpdateObjectsFromArrayWithNotification:(id)array;
+- (void)addOrUpdateObjectsFromArrayWithNotification:(id<NSFastEnumeration>)array;
 
 /**
  *  Convenience method to delete a RLMObject from the Realm and notify RBQRealmChangeLogger
@@ -57,6 +57,6 @@
  *
  *  @param array A collection object that conforms to NSFastEnumeration (e.g. NSArray, RLMArray, RLMResults)
  */
-- (void)deleteObjectsWithNotification:(id)array;
+- (void)deleteObjectsWithNotification:(id<NSFastEnumeration>)array;
 
 @end
