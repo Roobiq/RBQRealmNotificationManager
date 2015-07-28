@@ -32,7 +32,7 @@
 
 - (void)addOrUpdateObjectWithNotification:(RLMObject *)object
 {
-    if (object.realm != self) {
+    if (![self rbq_containsObject:object]) {
         [[RBQRealmChangeLogger loggerForRealm:self] didAddObject:object];
     }
     else {
@@ -63,6 +63,28 @@
     }
     
     [self deleteObjects:array];
+}
+
+#pragma mark - private helpers
+
+- (BOOL)rbq_containsObject:(RLMObject *)object {
+    if (!object) {
+        return NO;
+    }
+    
+    Class objectClass = [object class];
+    
+    RLMProperty *primaryKeyProperty = object.objectSchema.primaryKeyProperty;
+    
+    if (primaryKeyProperty) {
+        id primaryKeyValue = [object objectForKeyedSubscript:[objectClass primaryKey]];
+        
+        if (!primaryKeyValue) {
+            return NO;
+        }
+        
+        return !![[object class] objectInRealm:self forPrimaryKey:primaryKeyValue];
+    }
 }
 
 @end
