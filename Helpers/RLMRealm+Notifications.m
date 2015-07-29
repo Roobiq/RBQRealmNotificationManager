@@ -7,6 +7,7 @@
 //
 
 #import "RLMRealm+Notifications.h"
+#import "RLMObject+Utilities.h"
 #import "RBQRealmNotificationManager.h"
 
 @implementation RLMRealm (Notifications)
@@ -32,7 +33,7 @@
 
 - (void)addOrUpdateObjectWithNotification:(RLMObject *)object
 {
-    if (object.realm != self) {
+    if (object.realm != self && ![object isContainedInRealm:self]) {
         [[RBQRealmChangeLogger loggerForRealm:self] didAddObject:object];
     }
     else {
