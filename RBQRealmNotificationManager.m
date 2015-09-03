@@ -45,27 +45,21 @@
 - (void)didAddSafeObject:(RBQSafeRealmObject *)safeObject
 {
     @synchronized(self.internalAddedSafeObjects) {
-        if (![self.internalAddedSafeObjects containsObject:safeObject]) {
-            [self.internalAddedSafeObjects addObject:safeObject];
-        }
+        [self.internalAddedSafeObjects addObject:safeObject];
     }
 }
 
 - (void)willDeleteSafeObject:(RBQSafeRealmObject *)safeObject
 {
     @synchronized(self.internalDeletedSafeObjects) {
-        if (![self.internalDeletedSafeObjects containsObject:safeObject]) {
-            [self.internalDeletedSafeObjects addObject:safeObject];
-        }
+        [self.internalDeletedSafeObjects addObject:safeObject];
     }
 }
 
 - (void)didChangeSafeObject:(RBQSafeRealmObject *)safeObject
 {
     @synchronized(self.internalChangedSafeObjects) {
-        if (![self.internalChangedSafeObjects containsObject:safeObject]) {
-            [self.internalChangedSafeObjects addObject:safeObject];
-        }
+        [self.internalChangedSafeObjects addObject:safeObject];
     }
 }
 
