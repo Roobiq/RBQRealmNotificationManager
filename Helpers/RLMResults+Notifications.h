@@ -20,6 +20,6 @@
  *	@param value	The object value.
  *	@param key		The name of the property.
  */
-- (void)setValueWithNotification:(id)value forKey:(NSString *)key;
+- (void)setValueWithNotification:(nonnull id)value forKey:(nonnull NSString *)key;
 
 @end

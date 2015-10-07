@@ -13,7 +13,9 @@
  
  @param object Object to be edited (will need to be cast into appropriate subclass)
  */
+NS_ASSUME_NONNULL_BEGIN
 typedef void(^RBQChangeNotificationBlock)(id object);
+NS_ASSUME_NONNULL_END
 
 /**
  *  Category on RLMObject that provides convenience methods to change a RLMObject while automatically notifying RBQRealmChangeLogger
@@ -27,7 +29,7 @@ typedef void(^RBQChangeNotificationBlock)(id object);
  *
  *  @param block Block contains the RLMObject used to call this method. Edit the RLMObject within the block.
  */
-- (void)changeWithNotification:(RBQChangeNotificationBlock)block;
+- (void)changeWithNotification:(nonnull RBQChangeNotificationBlock)block;
 
 /**
  *  Convenience method that accepts a RBQChangeNotificationBlock, which contains the current RLMObject as a parameter.
@@ -36,6 +38,6 @@ typedef void(^RBQChangeNotificationBlock)(id object);
  *
  *  @param block Block contains the RLMObject used to call this method. Edit the RLMObject within the block.
  */
-- (void)changeWithNotificationInTransaction:(RBQChangeNotificationBlock)block;
+- (void)changeWithNotificationInTransaction:(nonnull RBQChangeNotificationBlock)block;
 
 @end

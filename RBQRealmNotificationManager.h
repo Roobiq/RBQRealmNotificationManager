@@ -21,30 +21,30 @@
 /**
  *  The class name of the entity
  */
-@property (readonly, nonatomic) NSString *className;
+@property (readonly, nonatomic, nonnull) NSString *className;
 
 /**
  *  Collection of RBQSafeRealmObjects representing the added objects
  */
-@property (readonly, nonatomic) NSSet *addedSafeObjects;
+@property (readonly, nonatomic, nonnull) NSSet *addedSafeObjects;
 
 /**
  *  Collection of RBQSafeRealmObjects representing the deleted objects
  */
-@property (readonly, nonatomic) NSSet *deletedSafeObjects;
+@property (readonly, nonatomic, nonnull) NSSet *deletedSafeObjects;
 
 /**
  *  Collection of RBQSafeRealmObjects representing the changed objects
  */
-@property (readonly, nonatomic) NSSet *changedSafeObjects;
+@property (readonly, nonatomic, nonnull) NSSet *changedSafeObjects;
 
-+ (instancetype)createEntityChangeObjectWithClassName:(NSString *)className;
++ (nonnull instancetype)createEntityChangeObjectWithClassName:(nonnull NSString *)className;
 
-- (void)didAddSafeObject:(RBQSafeRealmObject *)safeObject;
+- (void)didAddSafeObject:(nonnull RBQSafeRealmObject *)safeObject;
 
-- (void)willDeleteSafeObject:(RBQSafeRealmObject *)safeObject;
+- (void)willDeleteSafeObject:(nonnull RBQSafeRealmObject *)safeObject;
 
-- (void)didChangeSafeObject:(RBQSafeRealmObject *)safeObject;
+- (void)didChangeSafeObject:(nonnull RBQSafeRealmObject *)safeObject;
 
 @end
 
@@ -56,8 +56,10 @@
  *  @param entityChanges NSDictionary with the keys represented as the class name of an entity that had changes. The object in the dictionary is a RBQEntityChangesObject, which contains the specific changes.
  *  @param realm         RLMRealm that updated (this is the original RLMRealm instance that was acted on to perform the changes. Not thread-safe).
  */
+NS_ASSUME_NONNULL_BEGIN
 typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
                                     RLMRealm *realm);
+NS_ASSUME_NONNULL_END
 
 @interface RBQNotificationToken : NSObject
 
@@ -72,14 +74,14 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  */
 @interface RBQRealmChangeLogger : NSObject
 
-@property (readonly, nonatomic) NSDictionary *entityChanges;
+@property (readonly, nonatomic, nonnull) NSDictionary *entityChanges;
 
 /**
  *  Creates or retrieves the logger instance for the default Realm on the current thread
  *
  *  @return Instance of RBQRealmChangeLogger
  */
-+ (instancetype)defaultLogger;
++ (nonnull instancetype)defaultLogger;
 
 /**
  *  Creates or retrieves the logger instance for a specific Realm on the current thread
@@ -88,7 +90,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *
  *  @return Instance of RBQRealmChangeLogger
  */
-+ (instancetype)loggerForRealm:(RLMRealm *)realm;
++ (nonnull instancetype)loggerForRealm:(nonnull RLMRealm *)realm;
 
 /**
  *  Register an addition for a given RLMObject
@@ -97,7 +99,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *
  *  @param addedObject Added RLMObject
  */
-- (void)didAddObject:(RLMObjectBase *)addedObject;
+- (void)didAddObject:(nonnull RLMObjectBase *)addedObject;
 
 /**
  *  Register a collection of RLMObject additions
@@ -106,7 +108,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *
  *  @param addedObjects RLMArray, RLMResults, NSSet, or NSArray of added RLMObjects
  */
-- (void)didAddObjects:(id<NSFastEnumeration>)addedObjects;
+- (void)didAddObjects:(nonnull id<NSFastEnumeration>)addedObjects;
 
 /**
  *  Register a delete for a given RLMObject
@@ -115,7 +117,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *
  *  @param deletedObject To be deleted RLMObject
  */
-- (void)willDeleteObject:(RLMObjectBase *)deletedObject;
+- (void)willDeleteObject:(nonnull RLMObjectBase *)deletedObject;
 
 /**
  *  Register a collection of RLMObject deletes
@@ -124,7 +126,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *
  *  @param deletedObjects RLMArray, RLMResults, NSSet, or NSArray of deleted RLMObjects
  */
-- (void)willDeleteObjects:(id<NSFastEnumeration>)deletedObjects;
+- (void)willDeleteObjects:(nonnull id<NSFastEnumeration>)deletedObjects;
 
 /**
  *  Register a change for a given RLMObject
@@ -133,7 +135,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *
  *  @param changedObject Changed RLMObject
  */
-- (void)didChangeObject:(RLMObjectBase *)changedObject;
+- (void)didChangeObject:(nonnull RLMObjectBase *)changedObject;
 
 /**
  *  Register a collection of RLMObject changes
@@ -142,7 +144,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *
  *  @param changedObjects RLMArray, RLMResults, NSSet, or NSArray of changed RLMObjects
  */
-- (void)didChangeObjects:(id<NSFastEnumeration>)changedObjects;
+- (void)didChangeObjects:(nonnull id<NSFastEnumeration>)changedObjects;
 
 /**
  *  Convenience method to pass array of objects changed. Will ignore nil values;
@@ -151,9 +153,9 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *  @param deletedObjects RLMArray, RLMResults, NSSet, or NSArray of deleted RLMObjects
  *  @param changedObjects RLMArray, RLMResults, NSSet, or NSArray of changed RLMObjects
  */
-- (void)didAddObjects:(id<NSFastEnumeration>)addedObjects
-    willDeleteObjects:(id<NSFastEnumeration>)deletedObjects
-     didChangeObjects:(id<NSFastEnumeration>)changedObjects;
+- (void)didAddObjects:(nonnull id<NSFastEnumeration>)addedObjects
+    willDeleteObjects:(nonnull id<NSFastEnumeration>)deletedObjects
+     didChangeObjects:(nonnull id<NSFastEnumeration>)changedObjects;
 
 @end
 
@@ -167,7 +169,7 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *
  *  @return Singleton RBQRealmNotificationManager
  */
-+ (instancetype)defaultManager;
++ (nonnull instancetype)defaultManager;
 
 /**
  *  Use this method to add a notification block that will fire every time the Realm for this RBQNotificationManager updates. The block passes the changes from the Realm update that were logged to the RBQRealmNotificationManager.
@@ -181,13 +183,13 @@ typedef void(^RBQNotificationBlock)(NSDictionary *entityChanges,
  *
  *  @return A new instance of RBQNotificationToken.
  */
-- (RBQNotificationToken *)addNotificationBlock:(RBQNotificationBlock)block;
+- (nonnull RBQNotificationToken *)addNotificationBlock:(nonnull RBQNotificationBlock)block;
 
 /**
  *  De-register a notification given a RBQNotificationToken.
  *
  *  @param token The RBQNotificationToken to be de-registered.
  */
-- (void)removeNotification:(RBQNotificationToken *)token;
+- (void)removeNotification:(nonnull RBQNotificationToken *)token;
 
 @end

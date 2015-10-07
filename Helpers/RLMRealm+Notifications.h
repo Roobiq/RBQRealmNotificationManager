@@ -18,14 +18,14 @@
  *
  *  @param object Standalone RLMObject to be persisted
  */
-- (void)addObjectWithNotification:(RLMObject *)object;
+- (void)addObjectWithNotification:(nonnull RLMObject *)object;
 
 /**
  *  Convenience method to add a collection of RLMObjects to the Realm and notify RBQRealmChangeLogger
  *
  *  @param array A collection object that conforms to NSFastEnumeration (e.g. NSArray, RLMArray, RLMResults)
  */
-- (void)addObjectsWithNotification:(id<NSFastEnumeration>)array;
+- (void)addObjectsWithNotification:(nonnull id<NSFastEnumeration>)array;
 
 /**
  *  Convenience method to add or update a RLMObject to the Realm and notify RBQRealmChangeLogger
@@ -34,7 +34,7 @@
  *
  *  @param object RLMObject to add or update in the Realm
  */
-- (void)addOrUpdateObjectWithNotification:(RLMObject *)object;
+- (void)addOrUpdateObjectWithNotification:(nonnull RLMObject *)object;
 
 /**
  *  Convenience method to add or update a collection of RLMObjects to the Realm and notify RBQRealmChangeLogger
@@ -43,20 +43,20 @@
  *
  *  @param array A collection object that conforms to NSFastEnumeration (e.g. NSArray, RLMArray, RLMResults)
  */
-- (void)addOrUpdateObjectsFromArrayWithNotification:(id<NSFastEnumeration>)array;
+- (void)addOrUpdateObjectsFromArrayWithNotification:(nonnull id<NSFastEnumeration>)array;
 
 /**
  *  Convenience method to delete a RLMObject from the Realm and notify RBQRealmChangeLogger
  *
  *  @param object RLMObject to delete from the Realm
  */
-- (void)deleteObjectWithNotification:(RLMObject *)object;
+- (void)deleteObjectWithNotification:(nonnull RLMObject *)object;
 
 /**
  *  Convenience method to delete a collection of RLMObjects from the Realm and notify RBQRealmChangeLogger
  *
  *  @param array A collection object that conforms to NSFastEnumeration (e.g. NSArray, RLMArray, RLMResults)
  */
-- (void)deleteObjectsWithNotification:(id<NSFastEnumeration>)array;
+- (void)deleteObjectsWithNotification:(nonnull id<NSFastEnumeration>)array;
 
 @end
