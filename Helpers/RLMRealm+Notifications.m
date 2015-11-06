@@ -33,9 +33,15 @@
 
 - (void)addOrUpdateObjectWithNotification:(RLMObject *)object
 {
-    [self addOrUpdateObject:object];
+    BOOL isAddition = NO;
     
     if (object.realm != self && ![object isContainedInRealm:self]) {
+        isAddition = YES;
+    }
+    
+    [self addOrUpdateObject:object];
+    
+    if (isAddition) {
         [[RBQRealmChangeLogger loggerForRealm:self] didAddObject:object];
     }
     else {
