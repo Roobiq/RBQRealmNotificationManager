@@ -492,7 +492,8 @@ static char kAssociatedObjectKey;
                       if ([note isEqualToString:RLMRealmDidChangeNotification]) {
                           
                           // Pass the changes to the RealmNotificationManager
-                          [[RBQRealmNotificationManager defaultManager] sendNotificationsWithRealm:realm entityChanges:weakSelf.entityChanges];
+                          [[RBQRealmNotificationManager defaultManager] sendNotificationsWithRealm:realm
+                                                                                     entityChanges:weakSelf.entityChanges];
                           
                           // Nil the changes collection
                           weakSelf.internalEntityChanges = nil;
@@ -510,16 +511,14 @@ static char kAssociatedObjectKey;
         if ([NSThread isMainThread]) {
             [self registerChangeNotification];
         }
-        else { // HACK! Trigger the run loop on the thread to bypass Realm's check
-            [[NSRunLoop currentRunLoop] performSelector:@selector(registerChangeNotification)
-                                                 target:self
-                                               argument:nil
-                                                  order:0
-                                                  modes:@[NSDefaultRunLoopMode]];
+        else {
+            CFRunLoopPerformBlock(CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, ^{
+                [self registerChangeNotification];
+                
+                CFRunLoopStop(CFRunLoopGetCurrent());
+            });
             
-            while (!self.token &&
-                   [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                            beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]]);
+            CFRunLoopRun();
         }
     }
 }
