@@ -276,7 +276,7 @@ static char kAssociatedObjectKey;
         
         logger.realm = realm;
         
-        [logger registerChangeNotification];
+        [logger tokenCheck];
         
         // Associate the logger with the realm so we get dealloc when it does
         objc_setAssociatedObject(realm, &kAssociatedObjectKey, logger, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -507,7 +507,20 @@ static char kAssociatedObjectKey;
 - (void)tokenCheck
 {
     if (!self.token) {
-        [self registerChangeNotification];
+        if ([NSThread isMainThread]) {
+            [self registerChangeNotification];
+        }
+        else { // HACK! Trigger the run loop on the thread to bypass Realm's check
+            [[NSRunLoop currentRunLoop] performSelector:@selector(registerChangeNotification)
+                                                 target:self
+                                               argument:nil
+                                                  order:0
+                                                  modes:@[NSDefaultRunLoopMode]];
+            
+            while (!self.token &&
+                   [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                            beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]]);
+        }
     }
 }
 
